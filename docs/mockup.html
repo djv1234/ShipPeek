@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EasyshipDash — UI mockup</title>
+<style>
+  :root {
+    --bg-page: #f2f2f5;
+    --surface: #ffffff;
+    --surface-alt: #f5f5f7;
+    --border: #dcdce1;
+    --text-primary: #1c1c1e;
+    --text-secondary: #6b6b70;
+    --text-muted: #9a9aa0;
+    --accent: #0a7cff;
+    --accent-bg: #e8f2ff;
+    --success: #1a8a4a;
+    --success-bg: #e6f6ec;
+    --warning: #9a6b00;
+    --warning-bg: #fff3d6;
+    --danger: #c23b3b;
+    --danger-bg: #fbeaea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-primary);
+    padding: 2rem 1rem 4rem;
+  }
+  header {
+    max-width: 720px;
+    margin: 0 auto 2rem;
+  }
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0 0 4px;
+  }
+  header code {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12.5px;
+  }
+  .stage {
+    display: flex;
+    justify-content: center;
+  }
+  .phone {
+    width: 320px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  }
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px 4px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .navbar {
+    padding: 6px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .content {
+    height: 520px;
+    overflow-y: auto;
+    padding: 12px 16px;
+    position: relative;
+  }
+  .label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 14px 0 3px 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .label:first-child { margin-top: 0; }
+  .card {
+    background: var(--surface-alt);
+    border-radius: 10px;
+    padding: 0 12px;
+    margin-bottom: 8px;
+  }
+  .card.padded { padding: 10px 12px; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 2px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .row:last-child { border-bottom: none; }
+  input.field {
+    width: 100%;
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .btn {
+    width: 100%;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn.danger { background: var(--danger); }
+  .link-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 13px;
+    padding: 6px 2px;
+    cursor: pointer;
+  }
+  .hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 2px 2px 8px;
+    line-height: 1.4;
+  }
+  .resolved {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: -4px 0 4px 2px;
+  }
+  .resolved .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success);
+  }
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .quote-name { font-size: 14px; font-weight: 600; }
+  .quote-price { font-size: 14px; font-weight: 600; }
+  .quote-meta { font-size: 11px; color: var(--text-secondary); }
+  .checkpoint { display: flex; gap: 10px; padding: 6px 2px; }
+  .checkpoint .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-muted); margin-top: 5px; flex-shrink: 0;
+  }
+  .checkpoint.current .dot { background: var(--accent); }
+  .checkpoint-title { font-size: 13px; font-weight: 600; }
+  .checkpoint-meta { font-size: 11px; color: var(--text-muted); }
+  .segmented {
+    display: flex;
+    background: var(--surface-alt);
+    border-radius: 8px;
+    padding: 2px;
+    margin-bottom: 10px;
+  }
+  .segmented span {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    padding: 5px 0;
+    border-radius: 6px;
+    color: var(--text-muted);
+  }
+  .segmented span.on {
+    background: var(--surface);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .tabbar {
+    display: flex;
+    border-top: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    padding: 8px 0 6px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tab-btn .icon { font-size: 18px; line-height: 1; }
+  .tab-btn.active { color: var(--accent); }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+  }
+  .overlay-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .overlay-header button {
+    background: none; border: none; color: var(--accent);
+    font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  .country-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .notes {
+    max-width: 320px;
+    margin: 1.5rem auto 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .notes h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+  }
+  .notes ul { margin: 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>EasyshipDash — UI mockup</h1>
+  <p>Working reference for the SwiftUI app that wraps the Easyship API: rate quotes and a shipments/tracking dashboard. See <code>CLAUDE.md</code> and <code>README.md</code> in the project root for build instructions and confirmed API details.</p>
+  <p>Tap the tab bar below to switch screens; this is a static HTML approximation of the real app, not the app itself.</p>
+</header>
+
+<div class="stage">
+<div class="phone">
+
+  <div class="statusbar"><span>9:41</span><span>▂▄▆▂</span></div>
+  <div class="navbar" id="nav-title">Rate calculator</div>
+
+  <div class="content" id="content-area">
+
+    <div class="screen active" id="screen-rates">
+      <p class="label" style="margin-top:0">Destination</p>
+      <div class="card" onclick="openPicker()">
+        <div class="row">
+          <span>Country</span>
+          <span style="color:var(--text-secondary)"><span id="country-label">United States</span> ›</span>
+        </div>
+      </div>
+      <input class="field" id="postal-input" placeholder="ZIP code" value="43215" oninput="onPostalInput(this.value)">
+      <div class="resolved" id="resolved-city"><span class="dot"></span><span>Columbus, OH</span></div>
+      <button class="link-btn">+ Add full address details</button>
+
+      <p class="label">Parcel</p>
+      <input class="field" placeholder="Total weight (lb)" value="3.2" readonly>
+      <button class="link-btn">+ Add dimensions</button>
+      <p class="hint">Optional, but couriers bill by whichever is greater: actual or dimensional weight — worth adding for bulky-but-light items.</p>
+      <input class="field" placeholder="Value, $" value="20">
+
+      <button class="btn" style="margin-top:10px">Get rates</button>
+
+      <p class="label">Quotes</p>
+      <div class="card padded">
+        <div style="display:flex;justify-content:space-between">
+          <span class="quote-name">USPS Priority Mail</span><span class="quote-price">$9.85</span>
+        </div>
+        <span class="quote-meta">2-3 business days</span>
+      </div>
+      <div class="card padded">
+        <div style="display:flex;justify-content:space-between">
+          <span class="quote-name">UPS Ground</span><span class="quote-price">$13.40</span>
+        </div>
+        <span class="quote-meta">4-5 business days</span>
+      </div>
+
+      <div class="overlay" id="picker-overlay">
+        <div class="overlay-header">
+          <button onclick="closePicker()">Cancel</button>
+          <span style="font-size:15px;font-weight:600">Country</span>
+          <span style="width:44px"></span>
+        </div>
+        <input class="field" placeholder="Search countries" style="margin:10px 0" oninput="filterCountries(this.value)">
+        <div id="country-list"></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-shipments">
+      <div class="row" onclick="openDetail()">
+        <div><div style="font-weight:600">ESUS10042</div><div class="quote-meta">FedEx International</div></div>
+        <span class="badge" style="background:var(--warning-bg);color:var(--warning)">In transit</span>
+      </div>
+      <div class="row">
+        <div><div style="font-weight:600">ESSG10041</div><div class="quote-meta">DHL Express</div></div>
+        <span class="badge" style="background:var(--success-bg);color:var(--success)">Delivered</span>
+      </div>
+      <div class="row">
+        <div><div style="font-weight:600">ESGB10039</div><div class="quote-meta">USPS Priority</div></div>
+        <span class="badge" style="background:var(--accent-bg);color:var(--accent)">Created</span>
+      </div>
+      <div class="row">
+        <div><div style="font-weight:600">ESAU10038</div><div class="quote-meta">DHL Express</div></div>
+        <span class="badge" style="background:var(--danger-bg);color:var(--danger)">Cancelled</span>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-detail">
+      <div class="card padded">
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="quote-meta">Courier</span><span style="font-size:12px">FedEx International</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="quote-meta">Tracking #</span><span style="font-size:12px">FX88213741</span></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0"><span class="quote-meta">ETA</span><span style="font-size:12px">Aug 9</span></div>
+      </div>
+      <p class="label">Checkpoints</p>
+      <div class="checkpoint current">
+        <span class="dot"></span>
+        <div><div class="checkpoint-title">In transit to customer</div><div class="checkpoint-meta">Singapore · Aug 6, 8:12 AM</div></div>
+      </div>
+      <div class="checkpoint">
+        <span class="dot"></span>
+        <div><div class="checkpoint-title">Departed facility</div><div class="checkpoint-meta">Hong Kong · Aug 5, 6:40 PM</div></div>
+      </div>
+      <div class="checkpoint">
+        <span class="dot"></span>
+        <div><div class="checkpoint-title">Picked up</div><div class="checkpoint-meta">Hong Kong · Aug 5, 10:05 AM</div></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-settings">
+      <p class="label" style="margin-top:0">Environment</p>
+      <div class="segmented">
+        <span class="on">Sandbox</span>
+        <span>Production</span>
+      </div>
+      <input class="field" value="••••••••••••" readonly>
+
+      <p class="label">Default ship-from</p>
+      <div class="card">
+        <div class="row"><span>Country</span><span style="color:var(--text-secondary)">United States ›</span></div>
+      </div>
+      <input class="field" placeholder="Contact name" value="Sergey Volf">
+      <input class="field" placeholder="Address line 1" value="604 Beljon Ln">
+      <input class="field" placeholder="City" value="Aurora">
+      <input class="field" placeholder="State" value="OH">
+      <input class="field" placeholder="ZIP" value="44202">
+      <button class="btn" style="margin:4px 0 8px">Save address</button>
+      <button class="btn danger">Sign out</button>
+    </div>
+
+  </div>
+
+  <div class="tabbar">
+    <button class="tab-btn active" id="tab-rates" onclick="showScreen('rates')"><span class="icon">$</span>Rates</button>
+    <button class="tab-btn" id="tab-shipments" onclick="showScreen('shipments')"><span class="icon">▣</span>Shipments</button>
+    <button class="tab-btn" id="tab-settings" onclick="showScreen('settings')"><span class="icon">⚙</span>Settings</button>
+  </div>
+
+</div>
+</div>
+
+<div class="notes">
+  <h2>What this reflects</h2>
+  <ul>
+    <li>Rates: country picked from a searchable list, postal code required only for US, weight always required with dimensions/full address behind "Add…" buttons, value always in USD.</li>
+    <li>Shipments: paginated list with state badges; tap a row for courier + tracking checkpoint timeline.</li>
+    <li>Settings: sandbox/production token, default ship-from address reused on every rate request.</li>
+  </ul>
+</div>
+
+<script>
+  const countries = ["United States","Canada","United Kingdom","Australia","Germany","Singapore","Japan","Mexico"];
+  const titles = { rates: "Rate calculator", shipments: "Shipments", detail: "ESUS10042", settings: "Settings" };
+
+  function showScreen(name) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById("screen-" + name).classList.add("active");
+    document.getElementById("nav-title").textContent = titles[name];
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    const tabId = name === "detail" ? "tab-shipments" : "tab-" + name;
+    const tab = document.getElementById(tabId);
+    if (tab) tab.classList.add("active");
+  }
+
+  function openDetail() { showScreen("detail"); }
+
+  function renderCountries(list) {
+    document.getElementById("country-list").innerHTML = list.map(c =>
+      '<div class="country-row" onclick="selectCountry(\'' + c + '\')"><span>' + c + '</span>' +
+      (c === document.getElementById("country-label").textContent ? '<span>✓</span>' : '') +
+      '</div>'
+    ).join("");
+  }
+  function openPicker() {
+    document.getElementById("picker-overlay").style.display = "block";
+    renderCountries(countries);
+  }
+  function closePicker() {
+    document.getElementById("picker-overlay").style.display = "none";
+  }
+  function filterCountries(q) {
+    renderCountries(countries.filter(c => c.toLowerCase().includes(q.toLowerCase())));
+  }
+  function selectCountry(name) {
+    document.getElementById("country-label").textContent = name;
+    closePicker();
+    const isUS = name === "United States";
+    const input = document.getElementById("postal-input");
+    input.placeholder = isUS ? "ZIP code" : "Postal code (optional)";
+    input.value = isUS ? "43215" : "";
+    document.getElementById("resolved-city").style.display = isUS ? "flex" : "none";
+  }
+  function onPostalInput(v) {
+    const resolved = document.getElementById("resolved-city");
+    if (v.length >= 5) {
+      resolved.style.display = "flex";
+      resolved.querySelector("span:last-child").textContent = v === "43215" ? "Columbus, OH" : "Resolved city, state";
+    } else {
+      resolved.style.display = "none";
+    }
+  }
+</script>
+
+</body>
+</html>
