@@ -12,6 +12,17 @@ struct RateCalculatorView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if !viewModel.hasShipFromAddress {
+                    Section {
+                        Label(
+                            "Add your ship-from address in Settings — it's the origin for every rate request.",
+                            systemImage: "exclamationmark.circle"
+                        )
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+
                 Section("Destination") {
                     CountryPickerField(countryAlpha2: $viewModel.destination.countryAlpha2)
 
@@ -97,7 +108,7 @@ struct RateCalculatorView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(quote.courierService.name)
                                     .font(.headline)
-                                Text(CurrencyFormatting.format(quote.totalCharge))
+                                Text(CurrencyFormatting.format(quote.totalCharge, currencyCode: quote.currency ?? "USD"))
                                     .font(.subheadline)
                                 if let min = quote.minDeliveryTime, let max = quote.maxDeliveryTime {
                                     Text("\(min)-\(max) business days")
@@ -110,6 +121,7 @@ struct RateCalculatorView: View {
                 }
             }
             .navigationTitle("Rate Calculator")
+            .onAppear { viewModel.refreshShipFrom() }
         }
     }
 }

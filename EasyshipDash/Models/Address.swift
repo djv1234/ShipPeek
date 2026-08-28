@@ -1,6 +1,10 @@
 import Foundation
 
 /// Origin/destination address as expected by the Easyship `/rates` endpoint.
+///
+/// Wire keys are spelled out rather than left to a snake-case key strategy: `line1` has no case
+/// boundary for `.convertToSnakeCase` to break on, so it would go out as `line1` and Easyship —
+/// which wants `line_1` — would silently drop the street lines.
 struct Address: Codable, Equatable {
     var contactName: String = ""
     var companyName: String = ""
@@ -12,6 +16,19 @@ struct Address: Codable, Equatable {
     var state: String = ""
     var postalCode: String = ""
     var countryAlpha2: String = ""
+
+    enum CodingKeys: String, CodingKey {
+        case contactName = "contact_name"
+        case companyName = "company_name"
+        case contactEmail = "contact_email"
+        case contactPhone = "contact_phone"
+        case line1 = "line_1"
+        case line2 = "line_2"
+        case city
+        case state
+        case postalCode = "postal_code"
+        case countryAlpha2 = "country_alpha2"
+    }
 
     static let empty = Address()
 

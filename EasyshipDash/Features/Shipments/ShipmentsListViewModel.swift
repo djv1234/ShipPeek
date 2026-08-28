@@ -8,12 +8,17 @@ final class ShipmentsListViewModel {
     var shipments: [Shipment] = []
     var isLoading = false
     var errorMessage: String?
-    var selectedState: String? {
-        didSet { if oldValue != selectedState { Task { await reload() } } }
-    }
+    /// Set through `select(state:)` rather than a `didSet` that kicks off a detached reload — the
+    /// caller needs to be able to await the refresh, and the fire-and-forget version raced with the
+    /// load already in flight.
+    private(set) var selectedState: String?
 
     private var currentPage = 1
     private var hasMorePages = true
+
+    /// Bumped by every `reload()`. An in-flight page that comes back with a stale generation belongs
+    /// to a superseded filter, so it drops its results instead of appending them to the new list.
+    private var generation = 0
 
     static let states = ["created", "cancelled"]
 
@@ -22,16 +27,27 @@ final class ShipmentsListViewModel {
     }
 
     @MainActor
+    func select(state: String?) async {
+        guard state != selectedState else { return }
+        selectedState = state
+        await reload()
+    }
+
+    @MainActor
     func reload() async {
+        generation &+= 1
         currentPage = 1
         hasMorePages = true
         shipments = []
+        errorMessage = nil
+        isLoading = false
         await loadNextPage()
     }
 
     @MainActor
     func loadNextPage() async {
         guard !isLoading, hasMorePages else { return }
+        let requestGeneration = generation
         isLoading = true
         errorMessage = nil
 
@@ -40,6 +56,7 @@ final class ShipmentsListViewModel {
 
         do {
             let response: ShipmentsResponse = try await apiClient.get("/shipments", query: query)
+            guard requestGeneration == generation else { return }
             shipments.append(contentsOf: response.shipments)
             if let next = response.meta?.pagination?.next {
                 currentPage = next
@@ -48,7 +65,9 @@ final class ShipmentsListViewModel {
                 hasMorePages = false
             }
         } catch {
+            guard requestGeneration == generation else { return }
             errorMessage = (error as? EasyshipAPIError)?.errorDescription ?? error.localizedDescription
+            hasMorePages = false
         }
 
         isLoading = false

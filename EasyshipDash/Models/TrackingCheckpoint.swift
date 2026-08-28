@@ -19,7 +19,10 @@ struct ShipmentTrackingDetail: Decodable {
 }
 
 struct TrackingCheckpoint: Decodable, Identifiable, Equatable {
-    let id = UUID()
+    /// Easyship doesn't give checkpoints a stable id, so one is minted locally for `ForEach`.
+    /// `var` rather than `let`: an immutable property with a default triggers a "will not be
+    /// decoded" warning even when it's excluded from `CodingKeys`.
+    var id = UUID()
     var checkpointTime: Date?
     var primaryStatus: String?
     var message: String?

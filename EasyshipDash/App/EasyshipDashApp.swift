@@ -13,20 +13,14 @@ struct EasyshipDashApp: App {
 
 private struct RootView: View {
     let apiClient: EasyshipAPIClient
-    @State private var hasToken: Bool
-
-    init(apiClient: EasyshipAPIClient) {
-        self.apiClient = apiClient
-        _hasToken = State(initialValue: apiClient.hasToken)
-    }
 
     var body: some View {
-        Group {
-            if hasToken {
-                MainTabView(apiClient: apiClient)
-            } else {
-                OnboardingView(apiClient: apiClient, hasToken: $hasToken)
-            }
+        // Reads the client's observable `hasToken` directly, so signing out in Settings drops
+        // straight back to onboarding instead of leaving an unusable tab view on screen.
+        if apiClient.hasToken {
+            MainTabView(apiClient: apiClient)
+        } else {
+            OnboardingView(apiClient: apiClient)
         }
     }
 }
@@ -50,7 +44,6 @@ private struct MainTabView: View {
 
 private struct OnboardingView: View {
     let apiClient: EasyshipAPIClient
-    @Binding var hasToken: Bool
 
     @State private var environment: EasyshipEnvironment = .sandbox
     @State private var token: String = ""
@@ -76,9 +69,7 @@ private struct OnboardingView: View {
                     Button("Continue") {
                         let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
-                        KeychainStore.setToken(trimmed, for: environment)
-                        apiClient.environment = environment
-                        hasToken = true
+                        apiClient.setToken(trimmed, for: environment)
                     }
                     .disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
