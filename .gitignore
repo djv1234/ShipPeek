@@ -2,7 +2,7 @@
 *.xcodeproj/
 *.xcworkspace/
 # Also generated, from the `info.properties` block in project.yml.
-EasyshipDash/Info.plist
+ShipPeek/Info.plist
 
 # Xcode
 DerivedData/

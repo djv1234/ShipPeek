@@ -3,7 +3,7 @@ import Security
 
 /// Minimal wrapper around Keychain Services for storing the Easyship API token per environment.
 enum KeychainStore {
-    private static let service = "com.sergeyvolf.EasyshipDash.apiToken"
+    private static let service = "com.sergeyvolf.ShipPeek.apiToken"
 
     static func token(for environment: EasyshipEnvironment) -> String? {
         var query = baseQuery(for: environment)

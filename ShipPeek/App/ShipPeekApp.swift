@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct EasyshipDashApp: App {
+struct ShipPeekApp: App {
     @State private var apiClient = EasyshipAPIClient()
 
     var body: some Scene {

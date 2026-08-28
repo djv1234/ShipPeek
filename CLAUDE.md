@@ -1,4 +1,4 @@
-# EasyshipDash
+# ShipPeek
 
 SwiftUI iOS app (iOS 17+) wrapping the Easyship shipping API: rate shopping and a shipments/tracking dashboard. Single-user — API token lives in Keychain, no backend.
 
@@ -9,7 +9,7 @@ This repo is normally edited on Windows (no Xcode). Building/running requires a 
 ```bash
 brew install xcodegen
 xcodegen generate
-open EasyshipDash.xcodeproj
+open ShipPeek.xcodeproj
 ```
 
 `project.yml` is the source of truth for the Xcode project (targets, deployment target, bundle id) — never hand-edit a generated `.xcodeproj`.
@@ -60,15 +60,17 @@ The API reference at developers.easyship.com renders its request/response schema
 ## UI simplifications
 
 - Destination entry in Rate Calculator: `Address.isValidForRateRequest` requires country always, postal code only when country is US (other countries either lack postal codes or don't need one for a rate estimate — matches Easyship's own web quote tool, whose "Ship To" step is just a country dropdown + Zip Code field). Country picked from a searchable list (`Common/CountryPicker.swift`, built on `Locale.Region.isoRegions` — no external data file). `RateCalculatorViewModel.lookupCityStateIfNeeded()` uses `CLGeocoder` (on-device, no API key, works for any country) to best-effort fill in city/state for display, but it's cosmetic — the request still goes out with just country + postal if the lookup fails or is skipped. A "Add full address details" button reveals contact name/company/address lines/city/state for when you have them.
-- Ship-from address only needs to be entered once, in Settings — every rate request reuses it via `DefaultShipFromStore`.
+- Ship-from address only needs to be entered once, in Settings — every rate request reuses it via `ShipFromStore.shared`. That store is `@Observable` and both screens read the same instance: when Settings saved to `UserDefaults` and the Rate Calculator held its own cached copy, saving an address left "Get Rates" disabled until the tab was re-entered.
 - Parcel dimensions are behind an "Add dimensions" button (optional — only weight is required).
 - `ParcelItem.description` and `.category` are not user-facing — description is hardcoded to `"Item"`, category stays nil and is omitted from the payload. Not shown in the Rate Calculator UI since they don't affect the quote the user cares about; revisit if Easyship's API rejects a missing category (see below). Insurance is likewise not exposed — `RatesRequest.insurance.isInsured` stays at its `false` default.
-- The Rate Calculator can't submit without a ship-from address (`RateCalculatorViewModel.hasShipFromAddress` gates `canSubmit`, and the form shows a pointer to Settings). Without it the origin would go out empty and Easyship would 4xx with nothing explaining why.
+- **"Get Rates" always explains itself.** `RateCalculatorViewModel.missingRequirements` lists what's still needed (ship-from address, destination country, ZIP for US destinations, weight) and the view renders it as a footer under the disabled button. The required set isn't the intuitive one — dimensions and declared value are both optional, weight and country are not — so a silently greyed-out button is unguessable from the outside. Keep any new submit precondition in that list rather than adding a bare `&&` to `canSubmit`.
+- Country is the field people miss: it's a sheet-presenting row, not a text field, so it reads as required with a chevron and an accent-coloured "Required" until set.
 
 ## Known gaps / follow-ups
 
 - `ParcelItem.category` — valid values unconfirmed; currently omitted from the request. If rate requests start 4xx-ing, check this field first, since the one working sample seen had it populated (`"fashion"`).
-- Nothing here has been run against the live API yet, and the repo has no tests. The `/rates` payload is assembled from the sample in this file rather than from a request that's known to have succeeded.
+- The app builds and runs, but no `/rates` call is confirmed to have succeeded against the live sandbox yet, and the repo has no tests. The payload is assembled from the sample in this file rather than from a request known to have worked.
 - Easyship's own web quote tool also has a "Residential Address" toggle (Yes/No) on the destination, which affects courier rates (residential surcharges). Haven't confirmed the corresponding `/rates` request field name, so it's not implemented yet.
-- No app icon / `Assets.xcassets` set up yet.
+- `Assets.xcassets` exists with an `AppIcon` set wired for iOS 17 light/dark appearances, but the two 1024×1024 PNGs (`AppIcon-Light.png`, `AppIcon-Dark.png`) still need to be dropped in — see `docs/app-icon.md`. Without them the TestFlight upload is rejected.
+- The product is **ShipPeek**; "Easyship" now refers only to the vendor API, so `EasyshipAPIClient`/`EasyshipEnvironment`/`EasyshipAPIError` keep that name deliberately. Don't rename them to ShipPeek — they wrap someone else's service.
 - `incoterms`, `courier_settings`, `calculate_tax_and_duties`, `insurance` are hardcoded to sensible defaults in `RatesRequest` rather than user-configurable.

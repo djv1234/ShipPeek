@@ -1,4 +1,4 @@
-name: EasyshipDash
+name: ShipPeek
 options:
   bundleIdPrefix: com.sergeyvolf
   deploymentTarget:
@@ -12,21 +12,27 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
 
 targets:
-  EasyshipDash:
+  ShipPeek:
     type: application
     platform: iOS
     sources:
-      - path: EasyshipDash
+      - path: ShipPeek
     info:
-      path: EasyshipDash/Info.plist
+      path: ShipPeek/Info.plist
       properties:
+        CFBundleDisplayName: ShipPeek
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
+        # Answers App Store Connect's export-compliance question up front. The app only uses HTTPS
+        # via URLSession, which is exempt; without this key Connect asks on every single upload.
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sergeyvolf.EasyshipDash
+        PRODUCT_BUNDLE_IDENTIFIER: com.sergeyvolf.ShipPeek
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: false
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

@@ -12,17 +12,6 @@ struct RateCalculatorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                if !viewModel.hasShipFromAddress {
-                    Section {
-                        Label(
-                            "Add your ship-from address in Settings — it's the origin for every rate request.",
-                            systemImage: "exclamationmark.circle"
-                        )
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    }
-                }
-
                 Section("Destination") {
                     CountryPickerField(countryAlpha2: $viewModel.destination.countryAlpha2)
 
@@ -93,6 +82,15 @@ struct RateCalculatorView: View {
                         }
                     }
                     .disabled(!viewModel.canSubmit)
+                } footer: {
+                    if !viewModel.missingRequirements.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Still needed:")
+                            ForEach(viewModel.missingRequirements, id: \.self) { requirement in
+                                Text("• \(requirement)")
+                            }
+                        }
+                    }
                 }
 
                 if let errorMessage = viewModel.errorMessage {
@@ -121,7 +119,6 @@ struct RateCalculatorView: View {
                 }
             }
             .navigationTitle("Rate Calculator")
-            .onAppear { viewModel.refreshShipFrom() }
         }
     }
 }
