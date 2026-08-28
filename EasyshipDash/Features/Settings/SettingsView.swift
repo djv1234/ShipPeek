@@ -25,10 +25,16 @@ struct SettingsView: View {
                     .disabled(!viewModel.canSave)
                 }
 
-                Section("Default Ship-From Address") {
+                Section {
                     AddressFormSection(address: $viewModel.shipFromAddress)
                     Button("Save Address") {
                         viewModel.saveShipFromAddress()
+                    }
+                } header: {
+                    Text("Default Ship-From Address")
+                } footer: {
+                    if !viewModel.isShipFromComplete {
+                        Text("Country is required (plus a ZIP code for US origins) before the Rate Calculator can request quotes.")
                     }
                 }
 
@@ -39,6 +45,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .onChange(of: viewModel.selectedEnvironment) {
+                viewModel.reloadTokenForSelectedEnvironment()
+            }
             .alert("Saved", isPresented: $viewModel.savedConfirmation) {
                 Button("OK", role: .cancel) {}
             }

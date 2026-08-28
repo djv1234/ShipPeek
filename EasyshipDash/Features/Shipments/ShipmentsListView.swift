@@ -16,9 +16,13 @@ struct ShipmentsListView: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Menu("Filter") {
-                            Button("All") { viewModel.selectedState = nil }
+                            Button("All") {
+                                Task { await viewModel.select(state: nil) }
+                            }
                             ForEach(ShipmentsListViewModel.states, id: \.self) { state in
-                                Button(state.capitalized) { viewModel.selectedState = state }
+                                Button(state.capitalized) {
+                                    Task { await viewModel.select(state: state) }
+                                }
                             }
                         }
                     }

@@ -9,15 +9,35 @@ struct RatesRequest: Encodable {
     var courierSettings = CourierSettings(showCourierLogoUrl: false, applyShippingRules: true)
     var shippingSettings: ShippingSettings
     var calculateTaxAndDuties: Bool = true
+
+    enum CodingKeys: String, CodingKey {
+        case originAddress = "origin_address"
+        case destinationAddress = "destination_address"
+        case parcels
+        case incoterms
+        case insurance
+        case courierSettings = "courier_settings"
+        case shippingSettings = "shipping_settings"
+        case calculateTaxAndDuties = "calculate_tax_and_duties"
+    }
 }
 
 struct Insurance: Encodable {
     var isInsured: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case isInsured = "is_insured"
+    }
 }
 
 struct CourierSettings: Encodable {
     var showCourierLogoUrl: Bool
     var applyShippingRules: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case showCourierLogoUrl = "show_courier_logo_url"
+        case applyShippingRules = "apply_shipping_rules"
+    }
 }
 
 struct ShippingSettings: Encodable {
@@ -43,6 +63,7 @@ struct RateQuote: Decodable, Identifiable, Equatable {
     var minDeliveryTime: Int?
     var maxDeliveryTime: Int?
     var incoterms: String?
+    var currency: String?
 
     var id: String { courierService.id }
 }

@@ -2,9 +2,10 @@ import Foundation
 
 @Observable
 final class EasyshipAPIClient {
-    var environment: EasyshipEnvironment {
-        didSet { UserDefaults.standard.set(environment.rawValue, forKey: Self.environmentKey) }
-    }
+    /// Both of these are plain stored properties updated through `setToken`/`signOut` rather than
+    /// via `didSet`, so that `@Observable` tracks them and the views reading them stay in sync.
+    private(set) var environment: EasyshipEnvironment
+    private(set) var hasToken: Bool
 
     private static let environmentKey = "easyship.environment"
     private let session: URLSession
@@ -13,21 +14,32 @@ final class EasyshipAPIClient {
 
     init(session: URLSession = .shared) {
         let storedRaw = UserDefaults.standard.string(forKey: Self.environmentKey)
-        self.environment = storedRaw.flatMap(EasyshipEnvironment.init(rawValue:)) ?? .sandbox
+        let environment = storedRaw.flatMap(EasyshipEnvironment.init(rawValue:)) ?? .sandbox
+        self.environment = environment
+        self.hasToken = KeychainStore.token(for: environment) != nil
         self.session = session
 
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = APIDateDecoding.strategy
         self.decoder = decoder
 
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-        self.encoder = encoder
+        // No `keyEncodingStrategy` on purpose: `.convertToSnakeCase` leaves `line1` as `line1`
+        // (it only breaks on case boundaries, and there is no capital there), while Easyship expects
+        // `line_1`. Request types spell their wire keys out explicitly instead.
+        self.encoder = JSONEncoder()
     }
 
-    var hasToken: Bool {
-        KeychainStore.token(for: environment) != nil
+    func setToken(_ token: String, for newEnvironment: EasyshipEnvironment) {
+        KeychainStore.setToken(token, for: newEnvironment)
+        environment = newEnvironment
+        UserDefaults.standard.set(newEnvironment.rawValue, forKey: Self.environmentKey)
+        hasToken = KeychainStore.token(for: newEnvironment) != nil
+    }
+
+    func signOut(from signedOutEnvironment: EasyshipEnvironment) {
+        KeychainStore.deleteToken(for: signedOutEnvironment)
+        hasToken = KeychainStore.token(for: environment) != nil
     }
 
     func get<Response: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> Response {
@@ -48,7 +60,10 @@ final class EasyshipAPIClient {
             throw EasyshipAPIError.missingToken
         }
 
-        var url = environment.baseURL.appendingPathComponent(path)
+        // The base URL already carries the `/2024-09` path, so strip any leading slash from the
+        // component to avoid an empty path segment.
+        let component = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        var url = environment.baseURL.appendingPathComponent(component)
         if !query.isEmpty {
             var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
             components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
@@ -62,7 +77,11 @@ final class EasyshipAPIClient {
 
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = try? encoder.encode(body)
+            do {
+                request.httpBody = try encoder.encode(body)
+            } catch {
+                throw EasyshipAPIError.encoding(error)
+            }
         }
 
         let data: Data
@@ -83,8 +102,10 @@ final class EasyshipAPIClient {
         case 401, 403:
             throw EasyshipAPIError.unauthorized
         default:
-            let message = (try? decoder.decode(EasyshipErrorEnvelope.self, from: data))?.message
-            throw EasyshipAPIError.server(status: httpResponse.statusCode, message: message)
+            throw EasyshipAPIError.server(
+                status: httpResponse.statusCode,
+                message: EasyshipErrorParsing.message(from: data)
+            )
         }
 
         do {
@@ -96,7 +117,3 @@ final class EasyshipAPIClient {
 }
 
 private struct EmptyBody: Encodable {}
-
-private struct EasyshipErrorEnvelope: Decodable {
-    let message: String?
-}

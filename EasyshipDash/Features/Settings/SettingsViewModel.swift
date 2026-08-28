@@ -4,9 +4,7 @@ import Foundation
 final class SettingsViewModel {
     let apiClient: EasyshipAPIClient
 
-    var selectedEnvironment: EasyshipEnvironment {
-        didSet { tokenInput = KeychainStore.token(for: selectedEnvironment) ?? "" }
-    }
+    var selectedEnvironment: EasyshipEnvironment
     var tokenInput: String
     var shipFromAddress: Address
     var savedConfirmation: Bool = false
@@ -18,15 +16,27 @@ final class SettingsViewModel {
         self.shipFromAddress = DefaultShipFromStore.load()
     }
 
+    /// Sandbox and production hold separate tokens, so swapping the picker swaps which one is shown.
+    /// Driven by the view's `.onChange` rather than a `didSet` on `selectedEnvironment`, which would
+    /// mean giving the property accessors that `@Observable` also wants to synthesize.
+    func reloadTokenForSelectedEnvironment() {
+        tokenInput = KeychainStore.token(for: selectedEnvironment) ?? ""
+    }
+
     var canSave: Bool {
         !tokenInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// The Rate Calculator can't send a request without at least a country (and a ZIP for US
+    /// origins), so surface that here rather than letting the first rate request fail.
+    var isShipFromComplete: Bool {
+        shipFromAddress.isValidForRateRequest
     }
 
     func saveToken() {
         let trimmed = tokenInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        KeychainStore.setToken(trimmed, for: selectedEnvironment)
-        apiClient.environment = selectedEnvironment
+        apiClient.setToken(trimmed, for: selectedEnvironment)
         savedConfirmation = true
     }
 
@@ -36,7 +46,7 @@ final class SettingsViewModel {
     }
 
     func signOut() {
-        KeychainStore.deleteToken(for: selectedEnvironment)
+        apiClient.signOut(from: selectedEnvironment)
         tokenInput = ""
     }
 }
