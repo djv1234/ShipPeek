@@ -1,4 +1,4 @@
-# EasyshipDash
+# ShipPeek
 
 A SwiftUI iOS app for getting Easyship rate quotes and viewing shipments/tracking. Single-user — your API token is stored in the device Keychain, no backend required.
 
