@@ -16,6 +16,11 @@ Before using the Rate Calculator, set your default ship-from address in the Sett
 
 "Get Rates" stays disabled until every requirement is met, and lists what's still missing underneath it. Easyship requires the destination, the parcel's weight *and* all three dimensions, and an HS code (or item category ID) to classify the goods — every one of those was learned from a live 422 rather than the docs, so treat the in-app list as the source of truth.
 
+## Distribution
+
+[`docs/testflight.md`](docs/testflight.md) covers archiving and TestFlight. Set `DEVELOPMENT_TEAM`
+in `project.yml` first — it can't be set from Xcode's UI, since the `.xcodeproj` is regenerated.
+
 ## App icon
 
 `ShipPeek/Assets.xcassets/AppIcon.appiconset/` is wired for iOS 17 light/dark appearances but has no images yet. Add `AppIcon-Light.png` and `AppIcon-Dark.png` (both 1024×1024; the light one must have no alpha channel) — see [`docs/app-icon.md`](docs/app-icon.md).
