@@ -1,17 +1,39 @@
 import SwiftUI
 
 struct RateCalculatorView: View {
+    /// One case per editable field so the keyboard toolbar can move between them. The number pads
+    /// have no return key of their own, so without this there is no way to dismiss the keyboard
+    /// except tapping a non-scrolling part of the form.
+    private enum Field: Hashable {
+        case postalCode, weight, length, width, height, value
+    }
+
     @State private var viewModel: RateCalculatorViewModel
     @State private var showFullAddress = false
     @State private var showDimensions = false
+    @FocusState private var focusedField: Field?
+
+    private let walkthrough = WalkthroughState.shared
 
     init(apiClient: EasyshipAPIClient) {
         _viewModel = State(initialValue: RateCalculatorViewModel(apiClient: apiClient))
     }
 
+    private var isShowingCoachBubble: Bool {
+        !walkthrough.hasFetchedRates && walkthrough.shouldShow(WalkthroughState.Tip.rateCalculator)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                if isShowingCoachBubble {
+                    CoachBubble(
+                        text: "Pick where it's going and enter a parcel weight — that's all a quote needs. Dimensions and value are optional, but adding dimensions gives a more accurate price for bulky items."
+                    ) {
+                        walkthrough.dismiss(WalkthroughState.Tip.rateCalculator)
+                    }
+                }
+
                 Section("Destination") {
                     CountryPickerField(countryAlpha2: $viewModel.destination.countryAlpha2)
 
@@ -19,6 +41,7 @@ struct RateCalculatorView: View {
                         viewModel.destination.countryAlpha2 == "US" ? "ZIP code" : "Postal code (optional)",
                         text: $viewModel.destination.postalCode
                     )
+                        .focused($focusedField, equals: .postalCode)
                         .onChange(of: viewModel.destination.postalCode) {
                             Task { await viewModel.lookupCityStateIfNeeded() }
                         }
@@ -50,14 +73,18 @@ struct RateCalculatorView: View {
                 Section("Parcel") {
                     TextField("Total weight (lb)", text: $viewModel.weightLb)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .weight)
 
                     if showDimensions {
                         TextField("Length (in)", text: $viewModel.lengthIn)
                             .keyboardType(.decimalPad)
+                            .focused($focusedField, equals: .length)
                         TextField("Width (in)", text: $viewModel.widthIn)
                             .keyboardType(.decimalPad)
+                            .focused($focusedField, equals: .width)
                         TextField("Height (in)", text: $viewModel.heightIn)
                             .keyboardType(.decimalPad)
+                            .focused($focusedField, equals: .height)
                     } else {
                         Button("Add dimensions") {
                             withAnimation { showDimensions = true }
@@ -69,10 +96,12 @@ struct RateCalculatorView: View {
 
                     TextField("Value, $", text: $viewModel.itemValue)
                         .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .value)
                 }
 
                 Section {
                     Button {
+                        focusedField = nil
                         Task { await viewModel.fetchRates() }
                     } label: {
                         if viewModel.isLoading {
@@ -119,6 +148,13 @@ struct RateCalculatorView: View {
                 }
             }
             .navigationTitle("Rate Calculator")
+            .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { focusedField = nil }
+                }
+            }
         }
     }
 }

@@ -84,6 +84,8 @@ final class EasyshipAPIClient {
             }
         }
 
+        APIDebugLog.request(method: method, url: url, body: request.httpBody)
+
         let data: Data
         let response: URLResponse
         do {
@@ -100,8 +102,10 @@ final class EasyshipAPIClient {
         case 200...299:
             break
         case 401, 403:
+            APIDebugLog.response(status: httpResponse.statusCode, body: data)
             throw EasyshipAPIError.unauthorized
         default:
+            APIDebugLog.response(status: httpResponse.statusCode, body: data)
             throw EasyshipAPIError.server(
                 status: httpResponse.statusCode,
                 message: EasyshipErrorParsing.message(from: data)
