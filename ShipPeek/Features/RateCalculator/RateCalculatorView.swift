@@ -5,12 +5,11 @@ struct RateCalculatorView: View {
     /// have no return key of their own, so without this there is no way to dismiss the keyboard
     /// except tapping a non-scrolling part of the form.
     private enum Field: Hashable {
-        case postalCode, weight, length, width, height, value, category, hsCode
+        case postalCode, weight, length, width, height, value, hsCode, itemCategoryId
     }
 
     @State private var viewModel: RateCalculatorViewModel
     @State private var showFullAddress = false
-    @State private var showDimensions = false
     @FocusState private var focusedField: Field?
 
     private let walkthrough = WalkthroughState.shared
@@ -28,7 +27,7 @@ struct RateCalculatorView: View {
             Form {
                 if isShowingCoachBubble {
                     CoachBubble(
-                        text: "Pick where it's going and enter a parcel weight — that's all a quote needs. Dimensions and value are optional, but adding dimensions gives a more accurate price for bulky items."
+                        text: "Fill in where it's going, then the parcel's weight and size. Easyship needs all of those plus an HS code to classify the goods — anything still missing is listed under the Get Rates button."
                     ) {
                         walkthrough.dismiss(WalkthroughState.Tip.rateCalculator)
                     }
@@ -70,47 +69,44 @@ struct RateCalculatorView: View {
                     }
                 }
 
-                Section("Parcel") {
+                Section {
                     TextField("Total weight (lb)", text: $viewModel.weightLb)
                         .keyboardType(.decimalPad)
                         .focused($focusedField, equals: .weight)
 
-                    if showDimensions {
-                        TextField("Length (in)", text: $viewModel.lengthIn)
-                            .keyboardType(.decimalPad)
-                            .focused($focusedField, equals: .length)
-                        TextField("Width (in)", text: $viewModel.widthIn)
-                            .keyboardType(.decimalPad)
-                            .focused($focusedField, equals: .width)
-                        TextField("Height (in)", text: $viewModel.heightIn)
-                            .keyboardType(.decimalPad)
-                            .focused($focusedField, equals: .height)
-                    } else {
-                        Button("Add dimensions") {
-                            withAnimation { showDimensions = true }
-                        }
-                        Text("Optional, but couriers bill by whichever is greater: actual or dimensional (volumetric) weight — worth adding for bulky-but-light items.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    TextField("Length (in)", text: $viewModel.lengthIn)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .length)
+                    TextField("Width (in)", text: $viewModel.widthIn)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .width)
+                    TextField("Height (in)", text: $viewModel.heightIn)
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .height)
 
                     TextField("Value, $", text: $viewModel.itemValue)
                         .keyboardType(.decimalPad)
                         .focused($focusedField, equals: .value)
+                } header: {
+                    Text("Parcel")
+                } footer: {
+                    Text("Weight and all three dimensions are required — Easyship rejects a quote request without them. Couriers bill by whichever is greater, actual or dimensional weight, so the size matters to the price.")
                 }
 
                 Section {
-                    TextField("Category", text: $viewModel.category)
+                    TextField("HS code — 8 digits, e.g. 42029100", text: $viewModel.hsCode)
+                        .keyboardType(.numbersAndPunctuation)
+                        .autocorrectionDisabled()
+                        .focused($focusedField, equals: .hsCode)
+                    TextField("Easyship item category ID (alternative)", text: $viewModel.itemCategoryId)
+                        .keyboardType(.numbersAndPunctuation)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
-                        .focused($focusedField, equals: .category)
-                    TextField("HS code (optional)", text: $viewModel.hsCode)
-                        .keyboardType(.numbersAndPunctuation)
-                        .focused($focusedField, equals: .hsCode)
+                        .focused($focusedField, equals: .itemCategoryId)
                 } header: {
                     Text("Customs")
                 } footer: {
-                    Text("Easyship needs a category or an HS code on every item. \"\(ParcelItem.defaultCategory)\" is pre-filled because it's the one value confirmed to pass; if a category is rejected, an eight-digit HS code works instead.")
+                    Text("Easyship needs one of these to classify the goods. The HS code is the easier one to find — Easyship publishes a free lookup tool at easyship.com/hs-tariff-code-lookup. Codes are eight digits ending in 00.")
                 }
 
                 Section {

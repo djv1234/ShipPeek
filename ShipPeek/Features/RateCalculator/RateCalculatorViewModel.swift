@@ -15,11 +15,11 @@ final class RateCalculatorViewModel {
     var widthIn: String = ""
     var heightIn: String = ""
     var itemValue: String = ""
-    /// Easyship needs one of these two on every item. Pre-filled with the known-good category so the
-    /// common case needs no thought, but editable — the accepted category values aren't published,
-    /// and an HS code works in place of one.
-    var category: String = ParcelItem.defaultCategory
+    /// Easyship's customs check wants an `item_category_id` or an `hs_code` — the plain `category`
+    /// string gets past the first validation pass but not the second, so one of these two is
+    /// genuinely required. The HS code is the one a user can actually look up.
     var hsCode: String = ""
+    var itemCategoryId: String = ""
 
     var quotes: [RateQuote] = []
     var isLoading = false
@@ -49,9 +49,9 @@ final class RateCalculatorViewModel {
         missingRequirements.isEmpty && !isLoading
     }
 
-    /// Everything still standing between the form and a request. Surfaced in the UI: a disabled
-    /// button with no explanation is impossible to debug from the outside, and the required fields
-    /// here (country, weight) aren't the ones people expect — dimensions and value are both optional.
+    /// Everything still standing between the form and a request. Surfaced in the UI, because a
+    /// disabled button with no explanation is impossible to debug from the outside — and because
+    /// every entry here was learned from a live 422 rather than from the docs.
     var missingRequirements: [String] {
         var missing: [String] = []
         if !hasShipFromAddress {
@@ -65,22 +65,33 @@ final class RateCalculatorViewModel {
         if parsedWeight == nil {
             missing.append("A parcel weight in lb")
         }
-        // Easyship enforces this pair rather than either field individually, so state it the same
-        // way here — clearing the category without adding an HS code otherwise fails only at submit.
-        if trimmedCategory == nil && trimmedHSCode == nil {
-            missing.append("An item category or HS code")
+        if parsedDimensions == nil {
+            missing.append("Parcel dimensions — length, width and height in inches")
+        }
+        if trimmedHSCode == nil && trimmedItemCategoryId == nil {
+            missing.append("An HS code (or an Easyship item category ID)")
         }
         return missing
-    }
-
-    private var trimmedCategory: String? {
-        let trimmed = category.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
     }
 
     private var trimmedHSCode: String? {
         let trimmed = hsCode.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private var trimmedItemCategoryId: String? {
+        let trimmed = itemCategoryId.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    /// Required, despite reading as optional: Easyship rejects a rate request whose item carries no
+    /// dimensions. All three have to be present for the box to mean anything.
+    private var parsedDimensions: ParcelBox? {
+        guard let length = positiveDimension(lengthIn),
+              let width = positiveDimension(widthIn),
+              let height = positiveDimension(heightIn)
+        else { return nil }
+        return ParcelBox(length: length, width: width, height: height)
     }
 
     /// `Double("inf")` and `Double("nan")` both parse, and `JSONEncoder` refuses to encode either —
@@ -122,7 +133,7 @@ final class RateCalculatorViewModel {
 
     @MainActor
     func fetchRates() async {
-        guard let weight = parsedWeight, missingRequirements.isEmpty else {
+        guard let weight = parsedWeight, let dimensions = parsedDimensions, missingRequirements.isEmpty else {
             errorMessage = "Still needed: " + missingRequirements.joined(separator: ", ")
             return
         }
@@ -131,16 +142,12 @@ final class RateCalculatorViewModel {
         errorMessage = nil
         quotes = []
 
-        var dimensions: ParcelBox?
-        if let length = positiveDimension(lengthIn),
-           let width = positiveDimension(widthIn),
-           let height = positiveDimension(heightIn) {
-            dimensions = ParcelBox(length: length, width: width, height: height)
-        }
-
         let item = ParcelItem(
             description: "Item",
-            category: trimmedCategory,
+            // Sent alongside the id/HS code because it satisfies Easyship's first validation pass;
+            // harmless when an HS code is present, and the two passes complain separately.
+            category: ParcelItem.defaultCategory,
+            itemCategoryId: trimmedItemCategoryId,
             hsCode: trimmedHSCode,
             originCountryAlpha2: shipFrom.countryAlpha2,
             quantity: 1,
