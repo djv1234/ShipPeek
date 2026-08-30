@@ -28,6 +28,9 @@ private struct RootView: View {
 private struct MainTabView: View {
     let apiClient: EasyshipAPIClient
 
+    private let walkthrough = WalkthroughState.shared
+    @State private var isShowingWelcome = false
+
     var body: some View {
         TabView {
             RateCalculatorView(apiClient: apiClient)
@@ -38,6 +41,14 @@ private struct MainTabView: View {
 
             SettingsView(apiClient: apiClient)
                 .tabItem { Label("Settings", systemImage: "gearshape") }
+        }
+        .onAppear {
+            if !walkthrough.hasSeenWelcome { isShowingWelcome = true }
+        }
+        // Marked seen on dismiss rather than only on the button, so swiping the sheet away still
+        // counts — nobody wants the same intro every launch.
+        .sheet(isPresented: $isShowingWelcome, onDismiss: { walkthrough.markWelcomeSeen() }) {
+            WelcomeSheet { walkthrough.markWelcomeSeen() }
         }
     }
 }

@@ -2,36 +2,48 @@ import Foundation
 
 /// Easyship's error payloads vary by endpoint — `{"error": {"message": …, "details": […]}}`,
 /// `{"errors": […]}`, and a bare `{"message": …}` have all been seen — so rather than binding to one
-/// shape, walk whatever came back and pull out the first human-readable text. When nothing matches,
-/// fall back to the raw body: "unknown field `category`" is worth far more than "status 422" when
-/// you're getting a request shape right for the first time.
+/// shape, walk whatever came back and collect every human-readable string.
+///
+/// Collecting *all* of them matters: on a 422 the `message` is a generic "The request body content
+/// is not valid." while `details` carries the per-field complaint that actually tells you what to
+/// fix. Returning only the first match hid the useful half.
 enum EasyshipErrorParsing {
+    private static let maxLength = 600
+
     static func message(from data: Data) -> String? {
         guard !data.isEmpty else { return nil }
 
-        if let object = try? JSONSerialization.jsonObject(with: data), let text = extract(object) {
-            return text
+        if let object = try? JSONSerialization.jsonObject(with: data) {
+            var seen = Set<String>()
+            let parts = extractAll(object).filter { seen.insert($0).inserted }
+            if !parts.isEmpty {
+                return truncated(parts.joined(separator: "\n"))
+            }
         }
 
         let raw = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else { return nil }
-        return String(raw.prefix(300))
+        return truncated(raw)
     }
 
-    private static func extract(_ object: Any) -> String? {
+    private static func extractAll(_ object: Any) -> [String] {
         switch object {
         case let string as String:
-            return string.isEmpty ? nil : string
+            let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? [] : [trimmed]
         case let array as [Any]:
-            let parts = array.compactMap(extract)
-            return parts.isEmpty ? nil : parts.joined(separator: "\n")
+            return array.flatMap(extractAll)
         case let dictionary as [String: Any]:
-            for key in ["message", "error", "errors", "details", "description"] {
-                if let value = dictionary[key], let text = extract(value) { return text }
-            }
-            return nil
+            // Ordered so the summary reads first and the field-level detail follows.
+            return ["message", "details", "errors", "error", "description"]
+                .compactMap { dictionary[$0] }
+                .flatMap(extractAll)
         default:
-            return nil
+            return []
         }
+    }
+
+    private static func truncated(_ text: String) -> String {
+        text.count <= maxLength ? text : String(text.prefix(maxLength)) + "…"
     }
 }

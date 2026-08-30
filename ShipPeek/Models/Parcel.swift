@@ -28,7 +28,8 @@ struct ParcelItem: Encodable, Equatable, Identifiable {
     /// but the valid enum is unconfirmed — and leaving a field out is likelier to pass validation
     /// than sending an empty string, so this stays nil until we know the accepted values.
     var category: String? = nil
-    var sku: String = ""
+    /// Optional, like `category`, so an unset value is omitted instead of sent as `""`.
+    var sku: String? = nil
     var originCountryAlpha2: String = ""
     var quantity: Int = 1
     var dimensions: ParcelBox?

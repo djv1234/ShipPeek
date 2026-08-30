@@ -5,6 +5,7 @@ import Foundation
 final class RateCalculatorViewModel {
     private let apiClient: EasyshipAPIClient
     private let shipFromStore: ShipFromStore
+    private let walkthrough: WalkthroughState
     private let geocoder = CLGeocoder()
 
     var destination: Address = .empty
@@ -19,9 +20,14 @@ final class RateCalculatorViewModel {
     var isLoading = false
     var errorMessage: String?
 
-    init(apiClient: EasyshipAPIClient, shipFromStore: ShipFromStore = .shared) {
+    init(
+        apiClient: EasyshipAPIClient,
+        shipFromStore: ShipFromStore = .shared,
+        walkthrough: WalkthroughState = .shared
+    ) {
         self.apiClient = apiClient
         self.shipFromStore = shipFromStore
+        self.walkthrough = walkthrough
     }
 
     /// Read through to the shared store on every access, so saving an address in Settings takes
@@ -132,6 +138,7 @@ final class RateCalculatorViewModel {
         do {
             let response: RatesResponse = try await apiClient.post("/rates", body: request)
             quotes = response.rates.sorted { ($0.totalCharge ?? .greatestFiniteMagnitude) < ($1.totalCharge ?? .greatestFiniteMagnitude) }
+            walkthrough.markRatesFetched()
             if quotes.isEmpty {
                 errorMessage = "Easyship returned no rates for this route. Try a different destination or weight."
             }
