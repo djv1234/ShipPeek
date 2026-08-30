@@ -29,7 +29,18 @@ private struct MainTabView: View {
     let apiClient: EasyshipAPIClient
 
     private let walkthrough = WalkthroughState.shared
-    @State private var isShowingWelcome = false
+
+    /// Derived from the store rather than copied into local state on appear. "Show Walkthrough
+    /// Again" flips `hasSeenWelcome` back to false, and a one-shot `onAppear` had already run by
+    /// then — so the button appeared to do nothing at all.
+    private var isShowingWelcome: Binding<Bool> {
+        Binding(
+            get: { !walkthrough.hasSeenWelcome },
+            set: { isPresented in
+                if !isPresented { walkthrough.markWelcomeSeen() }
+            }
+        )
+    }
 
     var body: some View {
         TabView {
@@ -42,12 +53,9 @@ private struct MainTabView: View {
             SettingsView(apiClient: apiClient)
                 .tabItem { Label("Settings", systemImage: "gearshape") }
         }
-        .onAppear {
-            if !walkthrough.hasSeenWelcome { isShowingWelcome = true }
-        }
-        // Marked seen on dismiss rather than only on the button, so swiping the sheet away still
-        // counts — nobody wants the same intro every launch.
-        .sheet(isPresented: $isShowingWelcome, onDismiss: { walkthrough.markWelcomeSeen() }) {
+        // The binding's setter marks it seen, so swiping the sheet away counts the same as tapping
+        // Get Started — nobody wants the same intro every launch.
+        .sheet(isPresented: isShowingWelcome) {
             WelcomeSheet { walkthrough.markWelcomeSeen() }
         }
     }

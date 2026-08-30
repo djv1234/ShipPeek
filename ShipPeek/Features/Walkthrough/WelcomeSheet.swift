@@ -58,7 +58,8 @@ struct WelcomeSheet: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 12)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
                 .background(.bar)
             }
             .navigationBarTitleDisplayMode(.inline)

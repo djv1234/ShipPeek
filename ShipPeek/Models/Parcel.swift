@@ -24,10 +24,12 @@ struct ParcelBox: Encodable, Equatable {
 struct ParcelItem: Encodable, Equatable, Identifiable {
     var id = UUID()
     var description: String = ""
-    /// Omitted from the request when nil. Easyship's working samples populate this (e.g. "fashion"),
-    /// but the valid enum is unconfirmed — and leaving a field out is likelier to pass validation
-    /// than sending an empty string, so this stays nil until we know the accepted values.
+    /// Easyship requires **one of** `category` or `hs_code` on every item — a request with both
+    /// blank comes back 422: "category can't be blank if hs_code is blank".
     var category: String? = nil
+    /// The documented alternative to `category`: an eight-digit WTO Harmonized System code. Accepted
+    /// regardless of the category enum, so it doubles as the escape hatch when a category is rejected.
+    var hsCode: String? = nil
     /// Optional, like `category`, so an unset value is omitted instead of sent as `""`.
     var sku: String? = nil
     var originCountryAlpha2: String = ""
@@ -37,9 +39,16 @@ struct ParcelItem: Encodable, Equatable, Identifiable {
     var declaredCurrency: String = "USD"
     var declaredCustomsValue: Double = 0
 
+    /// The one category value confirmed to pass validation — it comes from Easyship's own generated
+    /// sample request. The full enum isn't published anywhere machine-readable (the API reference
+    /// renders via JavaScript), so the field is left editable rather than turned into a picker of
+    /// guesses that would 422 on selection.
+    static let defaultCategory = "fashion"
+
     enum CodingKeys: String, CodingKey {
         case description
         case category
+        case hsCode = "hs_code"
         case sku
         case originCountryAlpha2 = "origin_country_alpha2"
         case quantity

@@ -11,9 +11,12 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                if !viewModel.isShipFromComplete, walkthrough.shouldShow(WalkthroughState.Tip.shipFrom) {
+                // Shown until dismissed, not only while the address is incomplete: gating it on
+                // completeness meant anyone who had already filled the address in never saw the
+                // walkthrough's Settings step at all, including after replaying it.
+                if walkthrough.shouldShow(WalkthroughState.Tip.shipFrom) {
                     CoachBubble(
-                        text: "Set your ship-from address once and every rate quote will use it as the origin. Tap the Country row below — it's the only field that's strictly required."
+                        text: "Start here: paste your API token, then set the ship-from address below. Every rate quote uses it as the origin, so it's a one-time step — tap the Country row, it's the only field that's strictly required."
                     ) {
                         walkthrough.dismiss(WalkthroughState.Tip.shipFrom)
                     }
