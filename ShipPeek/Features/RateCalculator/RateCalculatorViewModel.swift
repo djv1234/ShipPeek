@@ -4,6 +4,7 @@ import Foundation
 @Observable
 final class RateCalculatorViewModel {
     private let apiClient: EasyshipAPIClient
+    private let shipFromStore: ShipFromStore
     private let geocoder = CLGeocoder()
 
     var destination: Address = .empty
@@ -18,17 +19,15 @@ final class RateCalculatorViewModel {
     var isLoading = false
     var errorMessage: String?
 
-    /// Mirrored from `DefaultShipFromStore` so the view can react to it. Refreshed whenever the tab
-    /// appears, since Settings may have changed it since this view model was created.
-    private(set) var shipFrom: Address
-
-    init(apiClient: EasyshipAPIClient) {
+    init(apiClient: EasyshipAPIClient, shipFromStore: ShipFromStore = .shared) {
         self.apiClient = apiClient
-        self.shipFrom = DefaultShipFromStore.load()
+        self.shipFromStore = shipFromStore
     }
 
-    func refreshShipFrom() {
-        shipFrom = DefaultShipFromStore.load()
+    /// Read through to the shared store on every access, so saving an address in Settings takes
+    /// effect here without the two screens having to coordinate.
+    var shipFrom: Address {
+        shipFromStore.address
     }
 
     var hasShipFromAddress: Bool {
@@ -36,7 +35,26 @@ final class RateCalculatorViewModel {
     }
 
     var canSubmit: Bool {
-        hasShipFromAddress && destination.isValidForRateRequest && parsedWeight != nil && !isLoading
+        missingRequirements.isEmpty && !isLoading
+    }
+
+    /// Everything still standing between the form and a request. Surfaced in the UI: a disabled
+    /// button with no explanation is impossible to debug from the outside, and the required fields
+    /// here (country, weight) aren't the ones people expect — dimensions and value are both optional.
+    var missingRequirements: [String] {
+        var missing: [String] = []
+        if !hasShipFromAddress {
+            missing.append("A ship-from address in Settings (country, plus ZIP for US origins)")
+        }
+        if destination.countryAlpha2.isEmpty {
+            missing.append("A destination country")
+        } else if destination.countryAlpha2 == "US" && destination.postalCode.isEmpty {
+            missing.append("A destination ZIP code")
+        }
+        if parsedWeight == nil {
+            missing.append("A parcel weight in lb")
+        }
+        return missing
     }
 
     /// `Double("inf")` and `Double("nan")` both parse, and `JSONEncoder` refuses to encode either —
@@ -78,14 +96,8 @@ final class RateCalculatorViewModel {
 
     @MainActor
     func fetchRates() async {
-        refreshShipFrom()
-
-        guard hasShipFromAddress else {
-            errorMessage = "Set your ship-from address in Settings first — it's the origin for every rate request."
-            return
-        }
-        guard let weight = parsedWeight else {
-            errorMessage = "Enter a valid parcel weight in lb."
+        guard let weight = parsedWeight, missingRequirements.isEmpty else {
+            errorMessage = "Still needed: " + missingRequirements.joined(separator: ", ")
             return
         }
 

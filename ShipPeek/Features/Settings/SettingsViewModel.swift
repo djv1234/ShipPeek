@@ -3,17 +3,20 @@ import Foundation
 @Observable
 final class SettingsViewModel {
     let apiClient: EasyshipAPIClient
+    private let shipFromStore: ShipFromStore
 
     var selectedEnvironment: EasyshipEnvironment
     var tokenInput: String
+    /// A working copy — edits only reach the shared store when "Save Address" is tapped.
     var shipFromAddress: Address
     var savedConfirmation: Bool = false
 
-    init(apiClient: EasyshipAPIClient) {
+    init(apiClient: EasyshipAPIClient, shipFromStore: ShipFromStore = .shared) {
         self.apiClient = apiClient
+        self.shipFromStore = shipFromStore
         self.selectedEnvironment = apiClient.environment
         self.tokenInput = KeychainStore.token(for: apiClient.environment) ?? ""
-        self.shipFromAddress = DefaultShipFromStore.load()
+        self.shipFromAddress = shipFromStore.address
     }
 
     /// Sandbox and production hold separate tokens, so swapping the picker swaps which one is shown.
@@ -41,7 +44,7 @@ final class SettingsViewModel {
     }
 
     func saveShipFromAddress() {
-        DefaultShipFromStore.save(shipFromAddress)
+        shipFromStore.save(shipFromAddress)
         savedConfirmation = true
     }
 

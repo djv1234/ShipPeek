@@ -34,8 +34,13 @@ struct CountryPickerField: View {
                 Text("Country")
                     .foregroundStyle(Color(uiColor: .label))
                 Spacer()
-                Text(selectedName ?? "Select")
-                    .foregroundStyle(.secondary)
+                // "Required" rather than a neutral "Select": this row is the one field people miss,
+                // and a rate request can't be built without it.
+                Text(selectedName ?? "Required")
+                    .foregroundStyle(selectedName == nil ? Color.accentColor : .secondary)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
             }
         }
         .sheet(isPresented: $isPresented) {
