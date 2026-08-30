@@ -24,11 +24,14 @@ struct ParcelBox: Encodable, Equatable {
 struct ParcelItem: Encodable, Equatable, Identifiable {
     var id = UUID()
     var description: String = ""
-    /// Easyship requires **one of** `category` or `hs_code` on every item — a request with both
-    /// blank comes back 422: "category can't be blank if hs_code is blank".
+    /// Satisfies Easyship's *first* validation pass ("category can't be blank if hs_code is blank"),
+    /// but is not sufficient on its own — see `itemCategoryId`. Always sent with `defaultCategory`.
     var category: String? = nil
-    /// The documented alternative to `category`: an eight-digit WTO Harmonized System code. Accepted
-    /// regardless of the category enum, so it doubles as the escape hatch when a category is rejected.
+    /// Easyship's second validation pass wants **`item_category_id` or `hs_code`**, not the plain
+    /// `category` string: "Shipment items need to input either item_category_id or hs_code at least".
+    /// The valid ids aren't published anywhere reachable, so `hs_code` is the path the UI leads with.
+    var itemCategoryId: String? = nil
+    /// Eight-digit WTO Harmonized System code (last two digits always `00`, e.g. `42029100`).
     var hsCode: String? = nil
     /// Optional, like `category`, so an unset value is omitted instead of sent as `""`.
     var sku: String? = nil
@@ -48,6 +51,7 @@ struct ParcelItem: Encodable, Equatable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case description
         case category
+        case itemCategoryId = "item_category_id"
         case hsCode = "hs_code"
         case sku
         case originCountryAlpha2 = "origin_country_alpha2"

@@ -14,7 +14,7 @@ Run on an iOS 17+ simulator or device. On first launch you'll be asked for an Ea
 
 Before using the Rate Calculator, set your default ship-from address in the Settings tab — it's used as the origin for every rate request, and **Country is required** (tap the row; it opens a searchable list).
 
-"Get Rates" stays disabled until every requirement is met, and lists what's still missing underneath it. Only country, destination, and weight are required — dimensions and declared value are optional.
+"Get Rates" stays disabled until every requirement is met, and lists what's still missing underneath it. Easyship requires the destination, the parcel's weight *and* all three dimensions, and an HS code (or item category ID) to classify the goods — every one of those was learned from a live 422 rather than the docs, so treat the in-app list as the source of truth.
 
 ## App icon
 
@@ -22,7 +22,7 @@ Before using the Rate Calculator, set your default ship-from address in the Sett
 
 ## Mockup
 
-[`docs/mockup.html`](docs/mockup.html) is a static, self-contained HTML reference for the UI (open it directly in any browser) — Rates, Shipments, and Settings tabs with the current field simplifications (country + optional postal code, dimensions/full-address behind expand buttons, USD-only value).
+[`docs/mockup.html`](docs/mockup.html) is a static, self-contained HTML reference for the UI (open it directly in any browser) — Rates, Shipments, and Settings tabs. Note it predates the customs and required-dimensions fields, so the live Rates screen has more inputs than the mockup shows.
 
 ## Structure
 

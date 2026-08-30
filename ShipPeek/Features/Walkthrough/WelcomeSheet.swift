@@ -30,7 +30,7 @@ struct WelcomeSheet: View {
                             number: 2,
                             systemImage: "dollarsign.circle.fill",
                             title: "Get a rate",
-                            detail: "In the Rates tab, pick a destination country and enter a parcel weight. Dimensions and value are optional."
+                            detail: "In the Rates tab: destination country, the parcel's weight and size, and an HS code for what's inside. Anything still missing is listed under the Get Rates button."
                         )
                         WelcomeStep(
                             number: 3,
