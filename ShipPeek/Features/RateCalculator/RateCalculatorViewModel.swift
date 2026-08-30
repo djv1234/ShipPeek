@@ -15,6 +15,11 @@ final class RateCalculatorViewModel {
     var widthIn: String = ""
     var heightIn: String = ""
     var itemValue: String = ""
+    /// Easyship needs one of these two on every item. Pre-filled with the known-good category so the
+    /// common case needs no thought, but editable — the accepted category values aren't published,
+    /// and an HS code works in place of one.
+    var category: String = ParcelItem.defaultCategory
+    var hsCode: String = ""
 
     var quotes: [RateQuote] = []
     var isLoading = false
@@ -60,7 +65,22 @@ final class RateCalculatorViewModel {
         if parsedWeight == nil {
             missing.append("A parcel weight in lb")
         }
+        // Easyship enforces this pair rather than either field individually, so state it the same
+        // way here — clearing the category without adding an HS code otherwise fails only at submit.
+        if trimmedCategory == nil && trimmedHSCode == nil {
+            missing.append("An item category or HS code")
+        }
         return missing
+    }
+
+    private var trimmedCategory: String? {
+        let trimmed = category.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private var trimmedHSCode: String? {
+        let trimmed = hsCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     /// `Double("inf")` and `Double("nan")` both parse, and `JSONEncoder` refuses to encode either —
@@ -120,6 +140,8 @@ final class RateCalculatorViewModel {
 
         let item = ParcelItem(
             description: "Item",
+            category: trimmedCategory,
+            hsCode: trimmedHSCode,
             originCountryAlpha2: shipFrom.countryAlpha2,
             quantity: 1,
             dimensions: dimensions,

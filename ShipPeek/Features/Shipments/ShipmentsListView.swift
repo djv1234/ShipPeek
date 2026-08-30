@@ -3,6 +3,7 @@ import SwiftUI
 struct ShipmentsListView: View {
     let apiClient: EasyshipAPIClient
     @State private var viewModel: ShipmentsListViewModel
+    private let walkthrough = WalkthroughState.shared
 
     init(apiClient: EasyshipAPIClient) {
         self.apiClient = apiClient
@@ -11,28 +12,40 @@ struct ShipmentsListView: View {
 
     var body: some View {
         NavigationStack {
-            content
-                .navigationTitle("Shipments")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Menu("Filter") {
-                            Button("All") {
-                                Task { await viewModel.select(state: nil) }
-                            }
-                            ForEach(ShipmentsListViewModel.states, id: \.self) { state in
-                                Button(state.capitalized) {
-                                    Task { await viewModel.select(state: state) }
-                                }
+            VStack(spacing: 0) {
+                if walkthrough.shouldShow(WalkthroughState.Tip.shipments) {
+                    CoachBubble(
+                        text: "Everything already booked on your Easyship account shows up here. Pull down to refresh, filter by state from the toolbar, and tap any shipment for checkpoint-level tracking."
+                    ) {
+                        walkthrough.dismiss(WalkthroughState.Tip.shipments)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                }
+
+                content
+            }
+            .navigationTitle("Shipments")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu("Filter") {
+                        Button("All") {
+                            Task { await viewModel.select(state: nil) }
+                        }
+                        ForEach(ShipmentsListViewModel.states, id: \.self) { state in
+                            Button(state.capitalized) {
+                                Task { await viewModel.select(state: state) }
                             }
                         }
                     }
                 }
-                .task {
-                    if viewModel.shipments.isEmpty { await viewModel.reload() }
-                }
-                .refreshable {
-                    await viewModel.reload()
-                }
+            }
+            .task {
+                if viewModel.shipments.isEmpty { await viewModel.reload() }
+            }
+            .refreshable {
+                await viewModel.reload()
+            }
         }
     }
 

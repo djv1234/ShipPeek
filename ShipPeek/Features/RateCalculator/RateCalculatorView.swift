@@ -5,7 +5,7 @@ struct RateCalculatorView: View {
     /// have no return key of their own, so without this there is no way to dismiss the keyboard
     /// except tapping a non-scrolling part of the form.
     private enum Field: Hashable {
-        case postalCode, weight, length, width, height, value
+        case postalCode, weight, length, width, height, value, category, hsCode
     }
 
     @State private var viewModel: RateCalculatorViewModel
@@ -97,6 +97,20 @@ struct RateCalculatorView: View {
                     TextField("Value, $", text: $viewModel.itemValue)
                         .keyboardType(.decimalPad)
                         .focused($focusedField, equals: .value)
+                }
+
+                Section {
+                    TextField("Category", text: $viewModel.category)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .focused($focusedField, equals: .category)
+                    TextField("HS code (optional)", text: $viewModel.hsCode)
+                        .keyboardType(.numbersAndPunctuation)
+                        .focused($focusedField, equals: .hsCode)
+                } header: {
+                    Text("Customs")
+                } footer: {
+                    Text("Easyship needs a category or an HS code on every item. \"\(ParcelItem.defaultCategory)\" is pre-filled because it's the one value confirmed to pass; if a category is rejected, an eight-digit HS code works instead.")
                 }
 
                 Section {
