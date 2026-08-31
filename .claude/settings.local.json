@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:developers.easyship.com)"
+      "WebFetch(domain:developers.easyship.com)",
+      "mcp__Claude_Code_Remote__register_repo_root"
     ]
   }
 }
