@@ -87,3 +87,19 @@ has no backend, so there is nothing shared to hand out. Testers without an Easys
 no further than onboarding. Give them a sandbox token directly if you want them past that screen.
 
 Builds expire **90 days** after upload.
+
+## Upload failures
+
+**"No orientations were specified in the … bundle."** `UISupportedInterfaceOrientations` was
+missing. Xcode's app template writes it for you; a hand-written `info.properties` block in
+`project.yml` does not, so the key simply wasn't there. Both keys are now set — and because
+`TARGETED_DEVICE_FAMILY` is `1,2`, the iPad list needs all four orientations so the app can be
+resized for multitasking. Dropping to `TARGETED_DEVICE_FAMILY: "1"` (iPhone only) is the other way
+to satisfy this, at the cost of iPad support.
+
+**"The bundle version must be higher than the previously uploaded version."** Bump
+`CURRENT_PROJECT_VERSION` and regenerate. Build numbers are consumed even by builds that were
+rejected during processing, so a failed upload can still burn one.
+
+After any `project.yml` change: `xcodegen generate`, then archive again — editing the generated
+`.xcodeproj` directly is pointless, it gets overwritten.
