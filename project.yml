@@ -9,7 +9,7 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "2"
 
 targets:
   ShipPeek:
@@ -22,6 +22,19 @@ targets:
       properties:
         CFBundleDisplayName: ShipPeek
         UILaunchScreen: {}
+        # Required, not optional. Xcode's own app template writes these; a hand-written
+        # `info.properties` block does not, and App Store Connect rejects the upload outright:
+        # "No orientations were specified in the … bundle." Because TARGETED_DEVICE_FAMILY includes
+        # iPad (2), the iPad list must carry all four so the app can be resized for multitasking.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        "UISupportedInterfaceOrientations~ipad":
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         # Answers App Store Connect's export-compliance question up front. The app only uses HTTPS
