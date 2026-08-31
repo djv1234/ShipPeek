@@ -6,12 +6,20 @@
    `DEVELOPMENT_TEAM` (developer.apple.com → Membership details), then `xcodegen generate`.
    It must live in `project.yml`: the `.xcodeproj` is generated and gitignored, so a team picked in
    Xcode's Signing & Capabilities pane disappears on the next regeneration.
-2. **App Store Connect record.** appstoreconnect.apple.com → Apps → **+** → New App.
+2. **App ID capabilities: none.** Register `com.sergeyvolf.ShipPeek` with every capability left
+   unchecked. Nothing in the app needs an entitlement — it only uses `URLSession` over HTTPS,
+   `UserDefaults`, its own Keychain item (`kSecClassGenericPassword`, no access group, so no
+   Keychain Sharing), and `CLGeocoder.geocodeAddressString`, which is a plain forward-geocode and
+   needs neither the location capability nor an `NSLocation…UsageDescription` key. No push, iCloud,
+   App Groups, Sign in with Apple, in-app purchase, or background modes.
+   Adding capabilities you don't use is not harmless: each one Xcode has to match against the
+   provisioning profile is another way for signing to fail.
+3. **App Store Connect record.** appstoreconnect.apple.com → Apps → **+** → New App.
    Bundle ID `com.sergeyvolf.ShipPeek`, SKU anything unique (`shippeek-ios` is fine).
    The **App Name must be unique across the entire App Store** — if "ShipPeek" is taken, pick a
    variant here; it's the store listing name, not the name under the icon (that's
    `CFBundleDisplayName`).
-3. **Build number.** Every upload needs a `CURRENT_PROJECT_VERSION` never used before for the
+4. **Build number.** Every upload needs a `CURRENT_PROJECT_VERSION` never used before for the
    current `MARKETING_VERSION`. Bump it in `project.yml` and regenerate for each upload.
 
 ## Archive and upload
@@ -39,17 +47,36 @@ Processing takes roughly 5–30 minutes. Export compliance is already answered b
 Internal is instant but every tester becomes a user on your Apple Developer account. External is
 the right call for anyone you would not give account access to.
 
-## Beta App Review notes (external only)
+The two are independent: someone can be an account user *and* an external tester, and adding
+account users does not affect external testing either way.
 
-Fill in **Test Information** once, under the TestFlight tab. The reviewer opens the app to an
-onboarding screen demanding an Easyship API token and can see nothing without one, so the review
-notes **must** include a working sandbox token — otherwise expect a rejection for incomplete
-functionality. Something like:
+## Beta App Review (external only)
 
-> ShipPeek is a client for the Easyship shipping API. It requires an Easyship API token, entered on
-> first launch. Use this sandbox token: `sand_...`. Choose "Sandbox" as the environment. Then open
-> the Settings tab and set a ship-from address (Country is required) before requesting a rate in the
-> Rates tab.
+Lighter than full App Store review — the reviewer is checking that the build launches, works, and
+does not obviously violate a guideline, not judging the product. Usually under 24 hours. Once the
+first build of a version passes, later builds of the same version normally go straight out.
+
+The overwhelmingly common rejection for an app like this one is **incomplete functionality**: the
+reviewer can't get past a screen asking for a credential they don't have.
+
+Fill in **Test Information** once, under the TestFlight tab:
+
+- **Beta App Description**, **Feedback Email**, **Contact info** (name, email, phone) — all required.
+- **Sign-in required**: leave this **off**. There is no account system; the toggle expects a
+  username and password, and there is nothing to put there.
+- **Notes** — this is the field that matters. The API token goes here:
+
+> ShipPeek is a client for the Easyship shipping API. There is no user account; the app asks for an
+> Easyship API token on first launch and stores it in the device Keychain.
+>
+> Use this sandbox token: `sand_...`  — select "Sandbox" as the environment.
+>
+> Then: Settings tab → set a ship-from address (tap the Country row, it's required) → Save Address.
+> Rates tab → choose a destination country and ZIP → enter weight and all three dimensions → enter
+> any 8-digit HS code, e.g. 42029100 → Get Rates. Anything still missing is listed under the button.
+
+Use a **sandbox** token here, never a production one — it goes into a form field on Apple's side and
+is not a secret you control after that.
 
 ## What testers do
 
